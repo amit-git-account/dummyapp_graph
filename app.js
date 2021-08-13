@@ -15,6 +15,8 @@ var usersRouter = require('./routes/users');
 
 const calendarRouter = require('./routes/calendar');
 
+const inboxRouter = require('./routes/inbox');
+
 const authRouter = require('./routes/auth');
 
 var app = express();
@@ -108,6 +110,8 @@ app.use('/auth', authRouter);
 app.use('/users', usersRouter);
 
 app.use('/calendar', calendarRouter);
+
+app.use('/inbox', inboxRouter);
 
 
 

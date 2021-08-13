@@ -1,0 +1,20 @@
+<h1 class="mb-3">Inbox</h1>
+<a href="/inbox/new" class="btn btn-light btn-sm mb-3">New email</a>
+<table class="table">
+  <thead>
+    <tr>
+      <th scope="col">Subject</th>
+      <th scope="col">Sender Name</th>
+      <th scope="col">Sender Address</th>
+    </tr>
+  </thead>
+  <tbody>
+    {{#each messages}}
+      <tr>
+        <td>{{this.subject}}</td>
+        <td>{{this.sender.emailAddress.name}}</td>
+        <td>{{this.sender.emailAddress.address}}</td>
+      </tr>
+    {{/each}}
+  </tbody>
+</table>

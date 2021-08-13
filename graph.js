@@ -12,6 +12,7 @@ module.exports = {
     return user;
   },
   
+  
   getCalendarView: async function(msalClient, userId, start, end, timeZone) {
     const client = getAuthenticatedClient(msalClient, userId);
 
@@ -70,7 +71,83 @@ module.exports = {
       .api('/me/events')
       .post(newEvent);
   },
+  
+  sendEmail: async function(msalClient, userId, formData) {
+    
+    const client = getAuthenticatedClient(msalClient, userId);
+    const sendMail = {
+      message: {
+        subject: formData.subject,
+        importance: formData.importance,
+        body: {
+            contentType: 'HTML',
+            content: formData.body
+        },
+        toRecipients: []
+        
+      },
+      saveToSentItems: 'true'
+    };
+
+    
+    formData.toRecipients.forEach(recipient => {
+      sendMail.message.toRecipients.push({
+        emailAddress: {
+          address: recipient
+        }
+      });
+    });
+    
+    
+    await client.api('/me/sendMail')
+      .post(sendMail);
+  },
+  
+  getEmails: async function(msalClient, userId, howManyMostRecent) {
+    const client = getAuthenticatedClient(msalClient, userId);
+    
+    let messages = await client.api('/me/messages')
+      .select('sender,subject')
+      .top(howManyMostRecent)
+      .get();
+    
+    return messages;
+  },
+  
+  createDraftEmail: async function(msalClient, userId, formData) {
+    
+    const message = {
+        subject: formData.subject,
+        importance: formData.importance,
+        body: {
+            contentType: 'HTML',
+            content: formData.body
+        },
+        toRecipients: []
+    };
+
+    
+    formData.toRecipients.forEach(recipient => {
+      message.toRecipients.push({
+        emailAddress: {
+          address: recipient
+        }
+      });
+    });
+    
+    await client.api('/me/messages')
+      .post(message);
+  },
+  
+  
+  
+  // getFullEmail: async function(msalClient, userId, emailId) {
+    
+    
+
 };
+
+
 
 function getAuthenticatedClient(msalClient, userId) {
   if (!msalClient || !userId) {

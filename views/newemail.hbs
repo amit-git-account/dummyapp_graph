@@ -1,15 +1,15 @@
 <form method="POST">
   <div class="form-group">
-    <label>Subject</label>
-    <input class="form-control" name="ev-subject" type="text" value="{{ newEvent.subject }}">
+    <label>Recipients (separate addresses by semicolon)</label>
+    <input class="form-control" name="em-recipients" type="text" value="{{ newEmail.recipients }}">
   </div>
   
   <div class="form-group">
-    <label>Attendees</label>
-    <input class="form-control" name="ev-attendees" type="text" value="{{ newEvent.attendees }}">
+    <label>Subject</label>
+    <input class="form-control" name="em-subject" type="text" value="{{ newEmail.subject }}">
   </div>
   
-  <div class="row">
+ {{!--  <div class="row">
     <div class="col">
       <div class="form-group">
         <label>Start</label>
@@ -22,13 +22,14 @@
         <input class="form-control" name="ev-end" type="datetime-local" value="{{ newEvent.end }}">
       </div>
     </div>
-  </div>
+  </div> --}}
   
   <div class="form-group mb-3">
     <label>Body</label>
-    <textarea class="form-control" name="ev-body" rows="3">{{ newEvent.body }}</textarea>
+    <textarea class="form-control" name="em-body" rows="3">{{ newEmail.body }}</textarea>
   </div>
-  <input class="btn btn-primary mr-2" type="submit" value="Create" />
+  
+  <input class="btn btn-primary mr-2" type="submit" value="Send" />
   <a class="btn btn-secondary" href="/calendar">Cancel</a>
   
 </form>

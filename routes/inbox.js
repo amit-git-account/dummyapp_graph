@@ -8,7 +8,7 @@ const iana = require('windows-iana');
 const { body, validationResult } = require('express-validator');
 const validator = require('validator');
 
-/* GET /calendar */
+/* GET email */
 router.get('/',
   async function(req, res) {
     if (!req.session.userId) {
@@ -16,7 +16,7 @@ router.get('/',
       res.redirect('/')
     } else {
       const params = {
-        active: { calendar: true }
+        active: { inbox: true }
       };
       
       // Get the user
@@ -24,24 +24,34 @@ router.get('/',
       // Convert user's Windows time zone ("Pacific Standard Time")
       // to IANA format ("America/Los_Angeles")
       const timeZoneId = iana.findIana(user.timeZone)[0];
+      
       console.log(`Time zone: ${timeZoneId.valueOf()}`);
 
-      // Calculate the start and end of the current week
-      // Get midnight on the start of the current week in the user's timezone,
-      // but in UTC. For example, for Pacific Standard Time, the time value would be
-      // 07:00:00Z
-      var weekStart = zonedTimeToUtc(startOfWeek(new Date()), timeZoneId.valueOf());
-      var weekEnd = addDays(weekStart, 7);
-      console.log(`Start: ${formatISO(weekStart)}`);
-
+      // // Calculate the start and end of the current week
+      // // Get midnight on the start of the current week in the user's timezone,
+      // // but in UTC. For example, for Pacific Standard Time, the time value would be
+      // // 07:00:00Z
+      // var weekStart = zonedTimeToUtc(startOfWeek(new Date()), timeZoneId.valueOf());
+      // var weekEnd = addDays(weekStart, 7);
+      // console.log(`Start: ${formatISO(weekStart)}`);
+      
+      
       try {
-        // Get the events
-        const events = await graph.getCalendarView(
+        // Get messages --> https://docs.microsoft.com/en-us/graph/api/user-list-messages?view=graph-rest-1.0&tabs=javascript
+        
+        const messages = await graph.getEmails(
           req.app.locals.msalClient,
           req.session.userId,
-          formatISO(weekStart),
-          formatISO(weekEnd),
-          user.timeZone);
+          10
+        );
+        
+        // Get the events
+        // const events = await graph.getCalendarView(
+        //   req.app.locals.msalClient,
+        //   req.session.userId,
+        //   formatISO(weekStart),
+        //   formatISO(weekEnd),
+        //   user.timeZone);
 
       //   res.json(events.value);
       // } catch (err) {
@@ -49,7 +59,9 @@ router.get('/',
       // }
       
         // Assign the events to the view parameters
-        params.events = events.value;
+        // params.events = events.value;
+        
+        params.messages = messages.value;
       } catch (err) {
         req.flash('error_msg', {
           message: 'Could not fetch events',
@@ -57,12 +69,11 @@ router.get('/',
         });
       }
 
-      res.render('calendar', params);
+      res.render('inbox', params);
     }
   }
 );
 
-/* GET /calendar/new */
 router.get('/new',
   function(req, res) {
     if (!req.session.userId) {
@@ -70,17 +81,17 @@ router.get('/new',
       res.redirect('/')
     } else {
       res.locals.newEvent = {};
-      res.render('newevent'); // views/newevent.hbs
+      res.render('newemail'); // views/newemail.hbs
     }
   }
 );
 
 /* POST /calendar/new */
 router.post('/new', [ // the array brackets here are not necessary
-    body('ev-subject').escape(),
+    body('em-subject').escape(),
     // Custom sanitizer converts ;-delimited string
     // to an array of strings
-    body('ev-attendees').customSanitizer(value => {
+    body('em-recipients').customSanitizer(value => {
       return value.split(';');
     // Custom validator to make sure each
     // entry is an email address
@@ -94,9 +105,9 @@ router.post('/new', [ // the array brackets here are not necessary
       return true;
     }),
     // Ensure start and end are ISO 8601 date-time values
-    body('ev-start').isISO8601(),
-    body('ev-end').isISO8601(),
-    body('ev-body').escape()
+    // body('ev-start').isISO8601(),
+    
+    body('em-body').escape()
   ], async function(req, res) {
     if (!req.session.userId) {
       // Redirect unauthenticated requests to home page
@@ -104,11 +115,11 @@ router.post('/new', [ // the array brackets here are not necessary
     } else {
       // Build an object from the form values
       const formData = {
-        subject: req.body['ev-subject'],
-        attendees: req.body['ev-attendees'],
-        start: req.body['ev-start'],
-        end: req.body['ev-end'],
-        body: req.body['ev-body']
+        subject: req.body['em-subject'],
+        importance: 'Low',
+        toRecipients: req.body['em-recipients'],
+        
+        body: req.body['em-body']
       };
 
       // Check if there are any errors with the form values
@@ -122,8 +133,8 @@ router.post('/new', [ // the array brackets here are not necessary
 
         // Preserve the user's input when re-rendering the form
         // Convert the attendees array back to a string
-        formData.attendees = formData.attendees.join(';');
-        return res.render('newevent', {
+        formData.toRecipients = formData.toRecipients.join(';');
+        return res.render('newemail', {
           newEvent: formData,
           error: [{ message: `Invalid input in the following fields: ${invalidFields}` }]
         });
@@ -134,23 +145,21 @@ router.post('/new', [ // the array brackets here are not necessary
 
       // Create the event
       try {
-        await graph.createEvent(
+        await graph.sendEmail(
           req.app.locals.msalClient,
           req.session.userId,
-          formData,
-          user.timeZone
+          formData
         );
       } catch (error) {
         req.flash('error_msg', {
-          message: 'Could not create event',
+          message: 'Could not create email',
           debug: JSON.stringify(error, Object.getOwnPropertyNames(error))
         });
       }
 
       // Redirect back to the calendar view
-      return res.redirect('/calendar');
+      return res.redirect('/inbox');
     }
   }
 );
-
 module.exports = router;
