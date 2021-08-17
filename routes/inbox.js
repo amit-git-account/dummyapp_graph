@@ -25,7 +25,7 @@ router.get('/',
       // to IANA format ("America/Los_Angeles")
       const timeZoneId = iana.findIana(user.timeZone)[0];
       
-      console.log(`Time zone: ${timeZoneId.valueOf()}`);
+      // console.log(`Time zone: ${timeZoneId.valueOf()}`);
 
       // // Calculate the start and end of the current week
       // // Get midnight on the start of the current week in the user's timezone,

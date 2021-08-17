@@ -23,14 +23,24 @@ router.get('/',
       const user = req.app.locals.users[req.session.userId];
       // Convert user's Windows time zone ("Pacific Standard Time")
       // to IANA format ("America/Los_Angeles")
-      const timeZoneId = iana.findIana(user.timeZone)[0];
-      console.log(`Time zone: ${timeZoneId.valueOf()}`);
+      var timeZoneId = iana.findIana(user.timeZone)[0];
+      
+      
+      var weekStart = zonedTimeToUtc(startOfWeek(new Date()), "America/Los_Angeles");
+      
+      if (timeZoneId != undefined) {
+        weekStart = zonedTimeToUtc(startOfWeek(new Date()), timeZoneId.valueOf());
+      }
+      
+      // console.log(`Time zone: ${timeZoneId.valueOf()}`);
 
       // Calculate the start and end of the current week
       // Get midnight on the start of the current week in the user's timezone,
       // but in UTC. For example, for Pacific Standard Time, the time value would be
       // 07:00:00Z
-      var weekStart = zonedTimeToUtc(startOfWeek(new Date()), timeZoneId.valueOf());
+      
+      
+      
       var weekEnd = addDays(weekStart, 7);
       console.log(`Start: ${formatISO(weekStart)}`);
 
